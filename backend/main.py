@@ -4,7 +4,7 @@ import asyncio
 import random
 from datetime import datetime
 
-app = FastAPI()
+app = FastAPI(title="MarketPulse API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,24 +15,24 @@ app.add_middleware(
 )
 
 @app.websocket("/ws/{symbol}")
-async def stream_stock_data(websocket: WebSocket, symbol: str):
+async def market_stream(websocket: WebSocket, symbol: str):
     await websocket.accept()
-    price = 80.0  # starting price for TD (placeholder)
+
+    price = 80.0  # TD stock placeholder
 
     try:
         while True:
-            price += random.uniform(-0.5, 0.5)
+            price += random.uniform(-0.4, 0.4)
             sentiment = random.uniform(-1, 1)
 
-            payload = {
+            await websocket.send_json({
                 "symbol": symbol,
                 "timestamp": datetime.utcnow().isoformat(),
                 "price": round(price, 2),
-                "sentiment_score": round(sentiment, 3),
-            }
+                "sentiment_score": round(sentiment, 3)
+            })
 
-            await websocket.send_json(payload)
             await asyncio.sleep(1)
 
     except WebSocketDisconnect:
-        print(f"Disconnected from {symbol}")
+        print(f"WebSocket disconnected for {symbol}")
